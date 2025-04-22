@@ -19,15 +19,18 @@ Inicializa o Dify com Docker Compose, deixando o sistema em funcionamento.
 
 
 🛠️ Como rodar a instalação
-Abra o terminal e execute os seguintes comandos:
+Abra o terminal e execute os seguintes comandos
 
-bash
-Copiar
-Editar
-git clone https://github.com/andreazambuja/installl.git
+Copiar e cole no seu Terminal
+
+
+( git clone https://github.com/andreazambuja/installl.git
 cd installl
 chmod +x install_dify.sh
-./install_dify.sh
+./install_dify.sh )
+
+
+
 Após isso, o Dify será instalado automaticamente e estará pronto para ser acessado via IP da sua VPS (porta padrão definida no docker-compose.yml)
 
 
