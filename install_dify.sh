@@ -1,94 +1,61 @@
 #!/bin/bash
 
-set -e
+clear
+echo "============================================================"
+echo "        🚀 INSTALADOR AUTOMÁTICO - DOCKER + DIFY 🚀        "
+echo "============================================================"
+sleep 2
 
-# --- Variáveis ---
-DIFY_DIR="/opt/dify"
-DOMAIN_WEB="dify.uptecnologia.online"
-DOMAIN_API="dfapi.uptecnologia.online"
-
-echo "🚀 Atualizando sistema..."
+# Atualizar pacotes
+echo "🔄 Atualizando pacotes..."
 sudo apt update && sudo apt upgrade -y
 
-echo "🐳 Instalando Docker + Compose..."
-sudo apt install -y ca-certificates curl gnupg lsb-release nginx
+# Instalar pacotes essenciais
+echo "📦 Instalando pacotes essenciais..."
+sudo apt install apt-transport-https ca-certificates curl software-properties-common apache2-utils -y
 
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# Adicionar chave GPG do Docker
+echo "🔐 Adicionando chave GPG do Docker..."
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
+# Adicionar repositório Docker
+echo "📁 Adicionando repositório Docker..."
 echo \
-"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
-sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
+# Atualizar novamente
+echo "🔄 Atualizando pacotes novamente..."
 sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-echo "🔁 Habilitando Docker..."
-sudo systemctl enable docker
-sudo systemctl start docker
+# Instalar Docker
+echo "🐳 Instalando Docker..."
+sudo apt install docker-ce docker-ce-cli containerd.io -y
 
-echo "📁 Clonando Dify..."
-sudo git clone https://github.com/langgenius/dify.git --branch 0.15.3 $DIFY_DIR
+# Instalar Docker Compose (caso necessário)
+echo "📦 Instalando Docker Compose..."
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 
-echo "📁 Configurando ambiente..."
-cd $DIFY_DIR/docker
-sudo cp .env.example .env
+# Criar acme.json e dar permissão
+echo "🛡️ Criando acme.json com permissão..."
+touch acme.json
+sudo chmod 600 acme.json
 
-sudo sed -i "s|^CONSOLE_WEB_URL=.*|CONSOLE_WEB_URL=https://$DOMAIN_WEB|" .env
-sudo sed -i "s|^SERVICE_API_URL=.*|SERVICE_API_URL=https://$DOMAIN_API|" .env
-sudo sed -i "s|^APP_WEB_URL=.*|APP_WEB_URL=https://$DOMAIN_WEB|" .env
-sudo sed -i "s|^APP_API_URL=.*|APP_API_URL=https://$DOMAIN_API|" .env
+# Clonar repositório do Dify
+echo "📥 Clonando Dify (v0.15.3)..."
+git clone https://github.com/langgenius/dify.git --branch 0.15.3
+cd dify/docker
 
-echo "📦 Subindo containers..."
-sudo docker compose up -d
+# Copiar .env de exemplo
+echo "⚙️ Preparando ambiente..."
+cp .env.example .env
 
-echo "🌐 Configurando NGINX..."
-sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+# Subir os containers com Docker Compose
+echo "🚀 Iniciando containers..."
+docker compose up -d
 
-# Adiciona include no nginx.conf se não existir
-grep -qxF 'include /etc/nginx/sites-enabled/*;' /etc/nginx/nginx.conf || \
-sudo sed -i '/http {/a \    include /etc/nginx/sites-enabled/*;' /etc/nginx/nginx.conf
-
-# Configura site WEB
-sudo tee /etc/nginx/sites-available/$DOMAIN_WEB > /dev/null <<EOF
-server {
-    listen 80;
-    server_name $DOMAIN_WEB;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-    }
-}
-EOF
-
-# Configura site API
-sudo tee /etc/nginx/sites-available/$DOMAIN_API > /dev/null <<EOF
-server {
-    listen 80;
-    server_name $DOMAIN_API;
-
-    location / {
-        proxy_pass http://localhost:5001;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-    }
-}
-EOF
-
-sudo ln -sf /etc/nginx/sites-available/$DOMAIN_WEB /etc/nginx/sites-enabled/
-sudo ln -sf /etc/nginx/sites-available/$DOMAIN_API /etc/nginx/sites-enabled/
-
-echo "✅ Testando e reiniciando NGINX..."
-sudo nginx -t && sudo systemctl reload nginx
-
-echo "🔐 Instalando Certbot e HTTPS..."
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --non-interactive --agree-tos --nginx -d $DOMAIN_WEB -d $DOMAIN_API -m admin@$DOMAIN_WEB
-
-echo "🎉 INSTALAÇÃO COMPLETA!"
-echo "Acesse:"
-echo "Frontend: https://$DOMAIN_WEB"
-echo "API: https://$DOMAIN_API"
+echo ""
+echo "✅ INSTALAÇÃO CONCLUÍDA COM SUCESSO!"
+echo "🌐 Acesse seu Dify via IP do servidor e a porta configurada no .env"
