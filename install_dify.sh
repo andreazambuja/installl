@@ -1,76 +1,75 @@
 #!/bin/bash
 
-# Verificar se script está sendo executado como root
+# Verificar permissão
 if [ "$EUID" -ne 0 ]; then
-  echo "❌ Por favor, execute este script como root (use: sudo ./nome_do_script.sh)"
+  echo "❌ Por favor, execute como root: sudo ./instalador.sh"
   exit 1
 fi
 
 clear
 echo "============================================================"
-echo "        🚀 INSTALADOR AUTOMÁTICO - DOCKER + DIFY 🚀"
-echo "        Contato: (21)98496-8082 | Email: andre.rj.tj@gmail.com"
-echo "        Por: André Azambuja (@andrecoruja)"
+echo "     🚀 INSTALADOR AUTOMÁTICO - DIFY + DOCKER 🚀"
+echo "     Contato: (21)98496-8082 | Email: andre.rj.tj@gmail.com"
+echo "     Por: André Azambuja (@andrecoruja)"
 echo "============================================================"
 sleep 2
 
-# Atualizar pacotes e instalar Git antes de tudo
-echo "🔄 Atualizando pacotes e instalando Git..."
-apt update && apt install git -y
+# INSTALAÇÃO DO GIT
+echo "🔧 INICIANDO A INSTALAÇÃO DO GIT..."
+sudo apt update && sudo apt install git -y
 
-# Instalar pacotes essenciais
-echo "📦 Instalando pacotes essenciais..."
-apt install -y apt-transport-https ca-certificates curl software-properties-common apache2-utils gnupg lsb-release
-
-# Adicionar chave GPG do Docker
-echo "🔐 Adicionando chave GPG do Docker..."
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
-# Adicionar repositório Docker
-echo "📁 Adicionando repositório Docker..."
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
-  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
-  tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Atualizar pacotes novamente
-echo "🔄 Atualizando pacotes novamente..."
-apt update
-
-# Instalar Docker
-echo "🐳 Instalando Docker..."
-apt install -y docker-ce docker-ce-cli containerd.io
-
-# Instalar Docker Compose via script oficial
-echo "📦 Instalando Docker Compose..."
+# INSTALAÇÃO DO DOCKER E DOCKER COMPOSE
+echo ""
+echo "🐳 INICIANDO A INSTALAÇÃO DO DOCKER E DOCKER COMPOSE..."
+sleep 5
+echo "📥 Baixando e executando script oficial do Docker..."
 curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
+sudo sh get-docker.sh
 
-# Habilitar e iniciar Docker
-systemctl enable docker
-systemctl start docker
-
-# Criar acme.json com permissão segura
-echo "🛡️ Criando acme.json com permissão..."
+# Criando acme.json e ajustando permissões
+echo ""
+echo "🛡️ Criando acme.json e ajustando permissões..."
 touch acme.json
-chmod 600 acme.json
+sudo chmod 600 acme.json
 
-# Clonar repositório do Dify
-echo "📥 Clonando Dify (última versão)..."
+# Instalando utilitário apache2-utils
+echo ""
+echo "⚙️ Instalando utilitário apache2-utils..."
+sudo apt-get install apache2-utils -y
+
+# Clonando repositório do Dify
+echo ""
+echo "📦 CLONANDO O REPOSITÓRIO DO DIFY..."
 git clone https://github.com/langgenius/dify.git
-cd dify/docker || exit
 
-# Copiar arquivo de ambiente
-echo "⚙️ Preparando ambiente..."
+# Entrando na pasta do Docker
+echo ""
+echo "📁 ENTRANDO NA PASTA docker DO DIFY..."
+cd dify/docker || { echo "❌ Erro ao acessar a pasta dify/docker"; exit 1; }
+
+# Copiar o arquivo .env
+echo ""
+echo "⚙️ COPIANDO O ARQUIVO DE CONFIGURAÇÃO .env..."
 cp .env.example .env
 
-# Iniciar containers
-echo "🚀 Iniciando containers..."
+# Informar ajustes manuais no .env
+echo ""
+echo "⚠️  AGORA, EDITE O ARQUIVO .env PARA DEFINIR AS VARIÁVEIS:"
+echo "    - Altere VECTOR_STORE para: VECTOR_STORE=milvus"
+echo "    - Configure:"
+echo "        MILVUS_URI=xxx"
+echo "        MILVUS_TOKEN=xxx"
+echo ""
+read -p "Pressione ENTER após configurar o arquivo .env para continuar..."
+
+# Iniciar os contêineres Docker
+echo ""
+echo "🚀 INICIANDO OS CONTÊINERES DOCKER..."
 docker compose up -d
 
-# Exibir IP do servidor
+# Finalização
 IP=$(hostname -I | awk '{print $1}')
-
 echo ""
-echo "✅ INSTALAÇÃO CONCLUÍDA COM SUCESSO!"
-echo "🌐 Acesse seu Dify em: http://$IP:porta_configurada_no_env"
+echo "✅ INSTALAÇÃO FINALIZADA COM SUCESSO!"
+echo "🌐 Abra o navegador e acesse: http://$IP"
+echo ""
