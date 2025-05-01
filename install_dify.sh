@@ -18,14 +18,9 @@ sleep 2
 echo "🔄 Atualizando pacotes..."
 apt update && apt upgrade -y
 
-# Instalar Git, se necessário
-echo "🔧 Verificando instalação do Git..."
-if ! command -v git &> /dev/null; then
-  echo "📦 Instalando Git..."
-  apt install git -y
-else
-  echo "✅ Git já está instalado."
-fi
+# Instalar Git logo no início
+echo "📦 Instalando Git..."
+apt install git -y
 
 # Instalar pacotes essenciais
 echo "📦 Instalando pacotes essenciais..."
