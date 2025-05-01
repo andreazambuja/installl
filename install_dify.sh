@@ -1,8 +1,14 @@
 #!/bin/bash
+# https://udify.uptecnologia.online
+# https://apidify.uptecnologia.online
+
+#!/bin/bash
+
+
 
 clear
 echo "============================================================"
-echo "        🚀 INSTALADOR AUTOMÁTICO - DOCKER + DIFY 🚀        "
+echo "        🚀 INSTALADOR AUTOMÁTICO - DOCKER + DIFY 🚀 contato (21)984968082 Email: andre.rj.tj@gmail.com André azambuja @andrecoruja        "
 echo "============================================================"
 sleep 2
 
@@ -44,8 +50,8 @@ touch acme.json
 sudo chmod 600 acme.json
 
 # Clonar repositório do Dify
-echo "📥 Clonando Dify (v0.15.3)..."
-git clone https://github.com/langgenius/dify.git --branch 0.15.3
+echo "📥 Clonando Dify (latest)..."
+git clone https://github.com/langgenius/dify.git
 cd dify/docker
 
 # Copiar .env de exemplo
