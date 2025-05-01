@@ -1,67 +1,85 @@
 #!/bin/bash
-# https://udify.uptecnologia.online
-# https://apidify.uptecnologia.online
 
-#!/bin/bash
-
-
+# Verificar se script está sendo executado como root
+if [ "$EUID" -ne 0 ]; then
+  echo "❌ Por favor, execute este script como root (use: sudo ./nome_do_script.sh)"
+  exit 1
+fi
 
 clear
 echo "============================================================"
-echo "        🚀 INSTALADOR AUTOMÁTICO - DOCKER + DIFY 🚀 contato (21)984968082 Email: andre.rj.tj@gmail.com André azambuja @andrecoruja        "
+echo "        🚀 INSTALADOR AUTOMÁTICO - DOCKER + DIFY 🚀"
+echo "        Contato: (21)98496-8082 | Email: andre.rj.tj@gmail.com"
+echo "        Por: André Azambuja (@andrecoruja)"
 echo "============================================================"
 sleep 2
 
 # Atualizar pacotes
 echo "🔄 Atualizando pacotes..."
-sudo apt update && sudo apt upgrade -y
+apt update && apt upgrade -y
+
+# Instalar Git, se necessário
+echo "🔧 Verificando instalação do Git..."
+if ! command -v git &> /dev/null; then
+  echo "📦 Instalando Git..."
+  apt install git -y
+else
+  echo "✅ Git já está instalado."
+fi
 
 # Instalar pacotes essenciais
 echo "📦 Instalando pacotes essenciais..."
-sudo apt install apt-transport-https ca-certificates curl software-properties-common apache2-utils -y
+apt install -y apt-transport-https ca-certificates curl software-properties-common apache2-utils gnupg lsb-release
 
 # Adicionar chave GPG do Docker
 echo "🔐 Adicionando chave GPG do Docker..."
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 # Adicionar repositório Docker
 echo "📁 Adicionando repositório Docker..."
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
   https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Atualizar novamente
+# Atualizar pacotes novamente
 echo "🔄 Atualizando pacotes novamente..."
-sudo apt update
+apt update
 
 # Instalar Docker
 echo "🐳 Instalando Docker..."
-sudo apt install docker-ce docker-ce-cli containerd.io -y
+apt install -y docker-ce docker-ce-cli containerd.io
 
-# Instalar Docker Compose (caso necessário)
+# Instalar Docker Compose via script oficial
 echo "📦 Instalando Docker Compose..."
 curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+sh get-docker.sh
 
-# Criar acme.json e dar permissão
+# Habilitar e iniciar Docker
+systemctl enable docker
+systemctl start docker
+
+# Criar acme.json com permissão segura
 echo "🛡️ Criando acme.json com permissão..."
 touch acme.json
-sudo chmod 600 acme.json
+chmod 600 acme.json
 
 # Clonar repositório do Dify
-echo "📥 Clonando Dify (latest)..."
+echo "📥 Clonando Dify (última versão)..."
 git clone https://github.com/langgenius/dify.git
-cd dify/docker
+cd dify/docker || exit
 
-# Copiar .env de exemplo
+# Copiar arquivo de ambiente
 echo "⚙️ Preparando ambiente..."
 cp .env.example .env
 
-# Subir os containers com Docker Compose
+# Iniciar containers
 echo "🚀 Iniciando containers..."
 docker compose up -d
 
+# Exibir IP do servidor
+IP=$(hostname -I | awk '{print $1}')
+
 echo ""
 echo "✅ INSTALAÇÃO CONCLUÍDA COM SUCESSO!"
-echo "🌐 Acesse seu Dify via IP do servidor e a porta configurada no .env"
+echo "🌐 Acesse seu Dify em: http://$IP:porta_configurada_no_env"
