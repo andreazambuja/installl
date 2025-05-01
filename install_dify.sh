@@ -14,13 +14,9 @@ echo "        Por: André Azambuja (@andrecoruja)"
 echo "============================================================"
 sleep 2
 
-# Atualizar pacotes
-echo "🔄 Atualizando pacotes..."
-apt update && apt upgrade -y
-
-# Instalar Git logo no início
-echo "📦 Instalando Git..."
-apt install git -y
+# Atualizar pacotes e instalar Git antes de tudo
+echo "🔄 Atualizando pacotes e instalando Git..."
+apt update && apt install git -y
 
 # Instalar pacotes essenciais
 echo "📦 Instalando pacotes essenciais..."
